@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { cleanPayload } from "@/app/common/helper";
 
 export async function DELETE(
   _req: Request,
@@ -12,25 +13,6 @@ export async function DELETE(
   await db.delete(clients).where(eq(clients.id, id));
 
   return NextResponse.json({ message: "Cliente eliminado" });
-}
-
-function cleanPayload(payload: any) {
-  const cleaned: any = {};
-  for (const key in payload) {
-    const val = payload[key];
-
-    if (val === undefined || val === null || val === "") continue;
-
-    // Drizzle NO acepta numbers si la columna es string/text
-    if (key === "value") {
-      cleaned[key] = String(val);
-      continue;
-    }
-
-    cleaned[key] = val;
-  }
-
-  return cleaned;
 }
 
 // ---------------------
