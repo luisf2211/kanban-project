@@ -15,7 +15,7 @@ import {
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 
-// ⬇️ DRAG & DROP
+// DRAG & DROP
 import {
     DragDropContext,
     Droppable,
@@ -24,17 +24,33 @@ import {
 } from "@hello-pangea/dnd";
 
 // =========================
+// TIPOS
+// =========================
+
+export type ProjectStatus = "todo" | "in_progress" | "review" | "done";
+
+export interface Project {
+    id: string;
+    name: string;
+    description: string;
+    status: ProjectStatus;
+    priority: string;
+    created_at: string;
+}
+
+// =========================
 // MAPEO DE ESTADOS
 // =========================
 
-const STATUS_MAP = {
+const STATUS_MAP: Record<ProjectStatus, string> = {
     todo: "Backlog",
     in_progress: "En Progreso",
     review: "En Revisión",
     done: "Completado",
 };
 
-const REVERSE_STATUS_MAP = {
+// OJO: debe mapear del NOMBRE DE LA COLUMNA → STATUS real
+const REVERSE_STATUS_MAP: Record<string, ProjectStatus> = {
     Backlog: "todo",
     "En Progreso": "in_progress",
     "En Revisión": "review",
@@ -42,6 +58,7 @@ const REVERSE_STATUS_MAP = {
 };
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
+
 const COLUMNS = ["Backlog", "En Progreso", "En Revisión", "Completado"];
 
 // =========================
@@ -49,7 +66,7 @@ const COLUMNS = ["Backlog", "En Progreso", "En Revisión", "Completado"];
 // =========================
 
 export default function ProyectosPage() {
-    const [projects, setProjects] = useState([]);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [opened, setOpened] = useState(false);
@@ -58,17 +75,20 @@ export default function ProyectosPage() {
     const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
     const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
-    // FORM
+    // FORM CREACIÓN
     const form = useForm({
         initialValues: {
             name: "",
             description: "",
-            status: "todo",
+            status: "todo" as ProjectStatus,
             priority: "medium",
         },
     });
 
+    // ============================
     // FETCH PROJECTS
+    // ============================
+
     const fetchProjects = async () => {
         setLoading(true);
         const res = await fetch("/api/projects");
@@ -81,7 +101,10 @@ export default function ProyectosPage() {
         fetchProjects();
     }, []);
 
+    // ============================
     // CREATE PROJECT
+    // ============================
+
     const createProject = async () => {
         const validation = form.validate();
         if (validation.hasErrors) return;
@@ -100,7 +123,10 @@ export default function ProyectosPage() {
         fetchProjects();
     };
 
+    // ============================
     // DELETE PROJECT
+    // ============================
+
     const deleteProject = async (id: string) => {
         setLoadingDeleteId(id);
 
@@ -112,12 +138,16 @@ export default function ProyectosPage() {
         }, 600);
     };
 
+    // ============================
     // DRAG & DROP HANDLER
+    // ============================
+
     const onDragEnd = async (result: DropResult) => {
         if (!result.destination) return;
 
         const { draggableId, destination } = result;
 
+        // Aquí corregimos el error: droppableId es el nombre de la columna (Backlog...)
         const newStatus = REVERSE_STATUS_MAP[destination.droppableId];
 
         setUpdatingStatusId(draggableId);
@@ -131,6 +161,10 @@ export default function ProyectosPage() {
         setUpdatingStatusId(null);
         fetchProjects();
     };
+
+    // ============================
+    // UI
+    // ============================
 
     return (
         <div className="p-6 w-full">
@@ -148,7 +182,7 @@ export default function ProyectosPage() {
             </div>
 
             {/* ============================
-          KANBAN + DRAG & DROP
+          KANBAN BOARD
       ============================ */}
 
             <DragDropContext onDragEnd={onDragEnd}>
@@ -223,6 +257,7 @@ export default function ProyectosPage() {
             {/* ============================
           MODAL CREATE PROJECT
       ============================ */}
+
             <Modal opened={opened} onClose={() => setOpened(false)} title="Nuevo Proyecto" centered>
                 <form onSubmit={form.onSubmit(createProject)} className="space-y-4">
                     <TextInput label="Nombre" {...form.getInputProps("name")} />
@@ -231,8 +266,8 @@ export default function ProyectosPage() {
 
                     <Select
                         label="Estatus"
-                        data={Object.entries(STATUS_MAP).map(([key, label]) => ({
-                            value: key,
+                        data={Object.entries(STATUS_MAP).map(([value, label]) => ({
+                            value,
                             label,
                         }))}
                         {...form.getInputProps("status")}

@@ -377,7 +377,7 @@ export default function ClientesPage() {
 
       {!loading && (
         <Group justify="center" mt="lg">
-          <Pagination total={totalPages} page={page} onChange={setPage} />
+          <Pagination total={totalPages} value={page} onChange={setPage} />
         </Group>
       )}
 
