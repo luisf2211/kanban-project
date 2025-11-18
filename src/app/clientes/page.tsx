@@ -65,7 +65,6 @@ export default function ClientesPage() {
     const [page, setPage] = useState(1);
 
     const form = useForm<ClienteForm>({
-        validate: zodResolver(schema),
         initialValues: {
             name: "",
             type: "Persona",
@@ -73,7 +72,16 @@ export default function ClientesPage() {
             date_from: "",
             date_to: "",
         },
+
+        validate: (values) => {
+            const result = schema.safeParse(values);
+
+            if (result.success) return {};
+
+            return result.error.flatten().fieldErrors;
+        },
     });
+
 
     // ========================================================
     // FETCH CLIENTS
