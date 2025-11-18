@@ -5,9 +5,12 @@ import { eq } from "drizzle-orm";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  await db.delete(clients).where(eq(clients.id, params.id));
+  const { id } = context.params;
+
+  await db.delete(clients).where(eq(clients.id, id));
+
   return NextResponse.json({ message: "Cliente eliminado" });
 }
 
@@ -15,16 +18,30 @@ function cleanPayload(payload: any) {
   const cleaned: any = {};
   for (const key in payload) {
     const val = payload[key];
-    if (val !== undefined && val !== null && val !== "" && !Number.isNaN(val)) {
-      cleaned[key] = val;
+
+    if (val === undefined || val === null || val === "") continue;
+
+    // Drizzle NO acepta numbers si la columna es string/text
+    if (key === "value") {
+      cleaned[key] = String(val);
+      continue;
     }
+
+    cleaned[key] = val;
   }
+
   return cleaned;
 }
 
-export async function PATCH(req: Request, { params }: any) {
+// ---------------------
+// PATCH
+// ---------------------
+export async function PATCH(
+  req: Request,
+  context: { params: { id: string } }
+) {
   try {
-    const id = params.id;
+    const { id } = context.params;
     const body = await req.json();
     const cleaned = cleanPayload(body);
 
